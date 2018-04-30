@@ -5,7 +5,7 @@ import sys
 import errno
 import appdirs
 import datetime
-
+import time
 
 appname = "rssAlert"
 appauthor = "RAL"
@@ -27,6 +27,7 @@ def showrss():
     try:
         with open(path, 'r') as f:
             # Get rid of all the newlines while you're reading it in
+            global text
             text = [x.strip() for x in f.readlines()]
     except:
         pass
@@ -39,23 +40,25 @@ def showrss():
         urls.append(line)
         # Feed line found in file to feedparser
         site = feedparser.parse(line)
-
-        if 'hack' in str(site):
-            # Show the URL you are displaying entries from
-            print(line)
-        else:
-            print ("no hacks today")
-        print site['entries'][0]['published']
-
-        num = min(3, len(site['entries']))
-        # Top three entries from the RSS feed
-        for entry in site['entries'][:num]:
-            title = entry['title']
-            link = entry['link']
-            print(title)
-            print(link)
-    print("Next query at the top of the hour\n")
-    return 1
+        holder = site['entries']
+        num = min(3, len(holder))
+        keyword = ['cisco', 'bravo', 'zulu']
+        count = 0
+        # find specific keywords in feed before deciding to save or not
+        for name in keyword:
+            if name in str(holder[:num]).lower():
+                # Specify what to do if keyword is found in the feed.
+                count += 1
+        if count != 0:
+            print 'Published on', site['entries'][0]['published']
+            # Top three entries from the RSS feed
+            for entry in holder[:num]:
+                title = entry['title']
+                link = entry['link']
+                print(title)
+                print(link)
+        print '\n'
+    return
 
 def addNewFeed():
     global text
@@ -69,9 +72,13 @@ def addNewFeed():
     showRSS()
 
 def menu():
-    while True:
-        showrss()
+    secs = 0
+    while secs != 1:
         p = datetime.datetime.today()
-        secs = 3600 - ((p.minute*60)+p.second)
+        secs = 3600 - ((p.minute * 60) + p.second)
+        print 'Next search at', 25 - p.hour, 'o\'clock\n'
         time.sleep(secs)
+    showrss()
+
+
 menu()
